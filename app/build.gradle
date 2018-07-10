@@ -1,0 +1,93 @@
+apply plugin: 'com.android.application'
+if ("true".equals(TINKER_ENABLE)) {
+    apply from: 'tinker-support.gradle'
+}
+android {
+    compileSdkVersion 26
+    buildToolsVersion "26.0.2"
+    defaultConfig {
+        applicationId "com.example.samge.hotfix"
+        minSdkVersion 15
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        // 开启multidex
+        multiDexEnabled true
+
+        ndk {
+            //设置支持的SO库架构
+            abiFilters 'armeabi' //, 'x86', 'armeabi-v7a', 'x86_64', 'arm64-v8a'
+        }
+    }
+
+    //配置keystore签名
+    signingConfigs {
+        release {
+            String osName = org.gradle.internal.os.OperatingSystem.current().getName();
+            String osVersion = org.gradle.internal.os.OperatingSystem.current().getVersion();
+
+            println "*** $osName $osVersion was detected!!!"
+
+            if (org.gradle.internal.os.OperatingSystem.current().isLinux()) {
+                println 'set key for linux'
+                storeFile file('/home/DATA/opt/KEY/EIP/jmeipkey.keystore')
+            } else if (org.gradle.internal.os.OperatingSystem.current().isUnix()) {
+                println 'set key for unix'
+                storeFile file('/Users/lanyixin/AndroidStudioProjects/jmeipkey.keystore')
+            } else if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+                println 'set key for windows'
+                storeFile file('C:/work/EIP-Android/keyBak/jmeipkey.keystore')
+            } else if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+                println 'set key for macOS'
+                storeFile file('/Users/lanyixin/AndroidStudioProjects/jmeipkey.keystore')
+            } else {
+                println 'fucker uuuu'
+            }
+            storePassword PW
+            keyAlias KEYALIAS
+            keyPassword PW
+        }
+    }
+
+    buildTypes {
+        release {
+            //是否开启混淆
+            minifyEnabled true
+            zipAlignEnabled true
+            // 移除无用的resource文件
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+
+    repositories {
+        flatDir {
+            dirs 'libs'
+        }
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "com.android.support:appcompat-v7:${android_support_version}"
+    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+    testImplementation 'junit:junit:4.12'
+//    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+//    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    api project(':tinkerlib')
+}

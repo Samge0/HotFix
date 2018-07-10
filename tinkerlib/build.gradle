@@ -1,0 +1,64 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    defaultConfig {
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        // 开启multidex
+        multiDexEnabled true
+
+        ndk {
+            //设置支持的SO库架构，如需更多架构，请去bugly官网下载放到libs目录下，并设置好对应CUP架构（需要与主工程一致）
+            abiFilters 'armeabi' //, 'x86', 'armeabi-v7a', 'x86_64', 'arm64-v8a'
+        }
+
+        manifestPlaceholders = [
+                FILEPROVIDER_AUTHORITIES        : FILEPROVIDER_AUTHORITIES
+        ]
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            buildConfigField("String","BUGLYID","\"${BUGLY_ID}\"")
+        }
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+
+    repositories {
+        flatDir {
+            dirs 'libs'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile "com.android.support:appcompat-v7:${android_support_version}"
+    compile 'com.android.support.constraint:constraint-layout:1.1.2'
+    testCompile 'junit:junit:4.12'
+    androidTestCompile 'com.android.support.test:runner:1.0.2'
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.2'
+
+    /*bugly-有+升级功能*/
+    compile "com.tencent.bugly:nativecrashreport:${BUGLY_NATIVECRASHREPORT}"
+    //compile 'com.tencent.bugly:crashreport:latest.release'//其中latest.release指代最新版本号，也可以指定明确的版本号，例如1.3.4
+    compile "com.tencent.bugly:crashreport_upgrade:${BUGLY_CRASHREPORT_UPGRADE}"
+    // 指定tinker依赖版本（注：应用升级1.3.5版本起，不再内置tinker）
+    compile "com.tencent.tinker:tinker-android-lib:${TINKER_VERSION}"
+    compile "com.android.support:multidex:1.0.1" // 多dex配置
+}
+
+tasks.withType(Jar){jarTask->
+    if(jarTask.name.equals('packageReleaseJar')){
+        jarTask.from android.sourceSets.main.java.srcDirs
+    }
+}
